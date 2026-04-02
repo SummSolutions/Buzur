@@ -56,3 +56,24 @@ test('rejects untrusted domain', isTier1Domain('https://suspicioussite.xyz/hack'
 console.log('');
 console.log('Results:', passed, 'passed,', failed, 'failed');
 if (failed === 0) console.log('All tests passed!');
+
+// -- Phase 3: URL Scanner --
+import { scanUrl, checkUrl } from "./src/urlScanner.js";
+
+const clean = scanUrl("https://pubmed.ncbi.nlm.nih.gov/12345");
+test("passes clean trusted URL", clean.verdict, "clean");
+
+const badTLD = scanUrl("https://totallylegit.xyz/free-money");
+test("flags suspicious TLD", badTLD.verdict, "suspicious");
+
+const rawIP = scanUrl("http://192.168.1.1/admin");
+test("flags raw IP address", rawIP.verdict, "suspicious");
+
+const homoglyph = scanUrl("https://paypa1.com/login");
+test("blocks homoglyph domain", homoglyph.verdict, "blocked");
+
+const invalid = scanUrl("not-a-url");
+test("blocks invalid URL", invalid.verdict, "blocked");
+
+const longHost = scanUrl("https://this-is-an-extremely-long-hostname-that-looks-very-suspicious-indeed.com");
+test("flags unusually long hostname", longHost.verdict, "suspicious");
