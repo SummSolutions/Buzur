@@ -99,6 +99,13 @@ Buzur's Phase 3 URL scanner works out of the box with heuristics alone — no AP
 - Layered: heuristics run first, VirusTotal adds depth
 - Works without an API key — VirusTotal enhances but is not required
 
+  **Phase 4 — Memory Poisoning Scanner**
+- Fake prior references: claims about what was previously agreed or discussed
+- False memory implanting: instructions disguised as recalled facts
+- History rewriting: attempts to overwrite established conversation context
+- Privilege escalation: fake history used to claim elevated permissions
+- Full conversation history scanning: flags poisoned turns by index and category
+
 ## Proven Capabilities
 
 Verified by test suite — 24 tests, 0 failures across all three phases.
@@ -108,7 +115,6 @@ Verified by test suite — 24 tests, 0 failures across all three phases.
 Buzur is one layer of a defense-in-depth strategy. Current limitations:
 
 **Planned for future versions:**
-- Multi-turn memory poisoning
 - RAG poisoning
 - MCP tool poisoning
 
