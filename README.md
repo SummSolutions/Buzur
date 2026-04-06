@@ -106,16 +106,23 @@ Buzur's Phase 3 URL scanner works out of the box with heuristics alone — no AP
 - Privilege escalation: fake history used to claim elevated permissions
 - Full conversation history scanning: flags poisoned turns by index and category
 
+**Phase 5 — RAG Poisoning Scanner**
+- AI-targeted metadata: instructions disguised as document notes
+- Fake system directives: system-level commands embedded in document content
+- Document authority spoofing: content claiming to supersede AI instructions
+- Retrieval manipulation: attempts to control what documents get retrieved
+- Chunk boundary attacks: injections hidden at document chunk edges
+- Batch scanning: scans full retrieval sets, returns clean and poisoned chunks with source metadata
+
 ## Proven Capabilities
 
-Verified by test suite — 33 tests, 0 failures across all three phases.
+Verified by test suite — 47 tests, 0 failures across all three phases.
 
 ## Known Limitations
 
 Buzur is one layer of a defense-in-depth strategy. Current limitations:
 
 **Planned for future versions:**
-- RAG poisoning
 - MCP tool poisoning
 
 **Outside Buzur's scope:**
