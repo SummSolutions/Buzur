@@ -82,6 +82,11 @@ Buzur's Phase 3 URL scanner works out of the box with heuristics alone — no AP
 - Semantic injection: persona hijacking, instruction overrides, jailbreak attempts
 - Homoglyph attacks: Cyrillic and Unicode lookalike characters
 - Base64 encoded injections
+- HTML/CSS obfuscation: display:none, visibility:hidden, zero font size, off-screen positioning
+- HTML comment injection: <!-- hidden instructions -->
+- Script tag injection: instructions hidden inside JavaScript blocks
+- HTML entity decoding: &lt;script&gt; decoded before scanning
+- Invisible Unicode character stripping
 
 **Phase 2 — Tiered Trust System**
 - Classifies queries as technical or general
@@ -96,7 +101,7 @@ Buzur's Phase 3 URL scanner works out of the box with heuristics alone — no AP
 
 ## Proven Capabilities
 
-Verified by test suite — 16 tests, 0 failures across all three phases.
+Verified by test suite — 24 tests, 0 failures across all three phases.
 
 ## Known Limitations
 
