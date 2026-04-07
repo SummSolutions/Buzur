@@ -154,16 +154,25 @@ Buzur's Phase 3 URL scanner works out of the box with heuristics alone — no AP
 - Generic MCP output scanning: scans all string values in any tool response object
 - Closes the indirect prompt injection via email/calendar/CRM connector gap
 
+**Phase 10 — Behavioral Anomaly Detection**
+- Session event tracking: records tool calls, messages, blocked attempts, and permission requests
+- Repeated boundary probing: flags iterative jailbreak attempts within a session
+- Exfiltration sequence detection: catches suspicious read→send tool call patterns
+- Permission creep detection: flags gradual escalation of requested capabilities
+- Late session escalation: detects clean-start sessions that suddenly turn adversarial
+- Velocity anomaly detection: flags unusually high event rates
+- Suspicion scoring: weighted scoring system with clean/suspicious/blocked verdicts
+- Stateful and sessionized: tracks behavior across multiple interactions, not just single inputs
+
 ## Proven Capabilities
 
-Verified by test suite — 86 tests, 0 failures across all nine phases.
+Verified by test suite — 94 tests, 0 failures across all ten phases.
 
 ## Known Limitations
 
 Buzur is one layer of a defense-in-depth strategy. Current limitations:
 
 **Planned for future versions:**
-- Behavioral anomaly detection: flagging when agent activity deviates from baseline
 - Multi-step attack chain detection: sequences of benign actions that combine into harm
 
 **Outside Buzur's scope:**
