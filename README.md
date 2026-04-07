@@ -164,16 +164,24 @@ Buzur's Phase 3 URL scanner works out of the box with heuristics alone — no AP
 - Suspicion scoring: weighted scoring system with clean/suspicious/blocked verdicts
 - Stateful and sessionized: tracks behavior across multiple interactions, not just single inputs
 
+**Phase 11 — Multi-Step Attack Chain Detection**
+- Step classification: identifies reconnaissance, trust building, exploitation, injection, privilege escalation, exfiltration, distraction, context poisoning, and boundary testing
+- Chain pattern matching: detects sequences of individually benign steps that combine into attacks
+- Recon→exploit detection: capability probing followed by exploitation attempt
+- Trust→inject detection: rapport building followed by instruction injection
+- Capability mapping→escalation: feature discovery followed by privilege abuse
+- Distraction→exfiltration: attention diversion followed by data theft attempt
+- Incremental boundary testing: gradual limit-pushing across multiple interactions
+- Context poisoning→exploit: false memory implanting followed by exploitation
+- Severity scoring: weighted chain scores with clean/suspicious/blocked verdicts
+
 ## Proven Capabilities
 
-Verified by test suite — 94 tests, 0 failures across all ten phases.
+Verified by test suite — 104 tests, 0 failures across all eleven phases.
 
 ## Known Limitations
 
 Buzur is one layer of a defense-in-depth strategy. Current limitations:
-
-**Planned for future versions:**
-- Multi-step attack chain detection: sequences of benign actions that combine into harm
 
 **Outside Buzur's scope:**
 - Network-level protection (DNS poisoning, MITM, SSL stripping — requires infrastructure controls)
