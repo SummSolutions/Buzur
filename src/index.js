@@ -2,6 +2,8 @@
 // Sumerian for "safety" and "a secret place"
 // https://github.com/ASumm07/buzur
 
+import { scanEvasion } from './evasionScanner.js';
+
 // -- HTML/CSS Obfuscation Stripper
 // Removes techniques attackers use to hide injections from humans
 // while keeping them visible to LLMs:
@@ -163,10 +165,11 @@ function decodeBase64Segments(text) {
 }
 
 // -- Main Scanner --
-// Pipeline: strip HTML obfuscation → normalize homoglyphs → decode base64 → pattern scan
+// Pipeline: strip HTML obfuscation → normalize homoglyphs → decode base64
+//           → decode evasion techniques → pattern scan
 
 export function scan(text) {
-  if (!text) return { clean: text, blocked: 0, triggered: [] };
+  if (!text) return { clean: text, blocked: 0, triggered: [], evasions: [] };
 
   // Step 1: Strip HTML/CSS obfuscation so hidden injections are exposed
   let s = stripHtmlObfuscation(text);
@@ -177,10 +180,19 @@ export function scan(text) {
   // Step 3: Decode base64 encoded segments
   s = decodeBase64Segments(s);
 
-  // Step 4: Pattern scan
-  let blocked = 0;
-  const triggered = [];
+  // Step 4: Decode evasion techniques (Phase 13)
+  // Handles: ROT13, hex escapes, URL encoding, Unicode escapes,
+  // lookalike punctuation, extended invisible Unicode,
+  // tokenizer attacks, multilingual injection patterns
+  const evasionResult = scanEvasion(s);
+  s = evasionResult.decoded;
+  const evasions = evasionResult.detections;
+  let blocked = evasionResult.multilingualBlocked;
+  const triggered = evasions
+    .filter(e => e.type === 'multilingual_injection')
+    .map(e => e.detail);
 
+  // Step 5: Pattern scan
   for (const p of structural) {
     const before = s;
     s = s.replace(p, "[BLOCKED]");
@@ -193,7 +205,7 @@ export function scan(text) {
     if (s !== before) { blocked++; triggered.push(p.toString()); }
   }
 
-  return { clean: s, blocked, triggered };
+  return { clean: s, blocked, triggered, evasions };
 }
 
 export function getTrustTier(query) {
