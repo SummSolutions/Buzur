@@ -66,6 +66,13 @@ const evasionResult = scanEvasion(userInput);
 if (evasionResult.detections.length > 0) {
   console.log("Buzur detected evasion techniques:", evasionResult.detections);
 }
+
+// Phase 14: Fuzzy match and prompt leak defense
+import { scanFuzzy } from "buzur/promptDefenseScanner";
+const fuzzyResult = scanFuzzy(userInput);
+if (fuzzyResult.verdict !== "clean") {
+  console.log("Buzur detected fuzzy injection or prompt leak:", fuzzyResult.fuzzyMatches, fuzzyResult.leakDetections);
+}
 ```
 
 ## VirusTotal Setup (Recommended)
@@ -266,9 +273,20 @@ echo "logs/" >> .gitignore
 - Multilingual injection patterns: French, Spanish, German, Italian, Portuguese, Russian, Chinese, Arabic
 - Wired into main scan() pipeline automatically — no extra calls required
 
+**Phase 14 — Fuzzy Match & Prompt Leak Defense**
+- Typo/misspelling detection: catches deliberate misspellings like ignnore, disreguard, jailbrake
+- Leet speak normalization: converts 1gnore, 0verride, @dmin to plain text before scanning
+- Levenshtein distance matching: flags words within edit distance 2 of known injection keywords
+- Overlap guard: requires 60% character overlap to prevent false positives on common words
+- Prompt extraction detection: blocks attempts to retrieve system prompt or original instructions
+- Context window dumping: catches requests to output entire context or conversation history
+- Partial extraction: detects first-line and indirect prompt leaking attempts
+- Indirect extraction: flags summarize/paraphrase/translate requests targeting system instructions
+- Leet normalization feeds downstream phases for full pipeline coverage
+
 ## Proven Capabilities
 
-Verified by test suite — 128 tests, 0 failures across all thirteen phases.
+Verified by test suite — 143 tests, 0 failures across all forteen phases.
 
 ## Known Limitations
 
