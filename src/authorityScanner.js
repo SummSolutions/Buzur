@@ -61,10 +61,10 @@ const verificationBypass = [
 // -- Urgency + Authority Combos --
 // Attacker pairs an emergency claim with authority to pressure immediate compliance
 const urgencyAuthority = [
-    /\b(emergency|urgent|critical|immediate)\b.{0,60}\b(owner|developer|admin|administrator|operator)\b/gi,
-    /\b(owner|developer|admin|administrator|operator)\b.{0,60}\b(emergency|urgent|critical|immediately)\b/gi,
-    /\bthis\s+is\s+(urgent|critical|an\s+emergency).{0,60}\b(I\s+am|I'm|this\s+is)\s+(your\s+)?(owner|developer|admin)\b/gi,
-    /\b(as\s+(your\s+)?(owner|developer|admin)).{0,60}(immediately|right\s+now|without\s+delay)\b/gi,
+    /\b(emergency|urgent|critical|immediate)\b.{0,120}\b(owner|developer|admin|administrator|operator)\b/gi,
+    /\b(owner|developer|admin|administrator|operator)\b.{0,120}\b(emergency|urgent|critical|immediately)\b/gi,
+    /\bthis\s+is\s+(urgent|critical|an\s+emergency).{0,120}\b(I\s+am|I'm|this\s+is)\s+(your\s+)?(owner|developer|admin)\b/gi,
+    /\b(as\s+(your\s+)?(owner|developer|admin)).{0,120}(immediately|right\s+now|without\s+delay)\b/gi,
 ];
 
 // -- Compile all pattern groups --
