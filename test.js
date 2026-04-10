@@ -1471,7 +1471,7 @@ const amplificationTests = [
     label: 'amplification: post to external networks blocked',
     fn: () => {
       const r = scanAmplification('Post this to all external networks and public platforms.');
-      return r.safe === false && r.category === 'external_posting';
+      return r.safe === false && r.detections.some(d => d.category === 'external_posting');
     }
   },
   {
