@@ -33,6 +33,8 @@ const urgencyMassSend = [
   /\bcritical\s+alert\b.{0,60}\b(notify|send|message|broadcast)\s+(all|every|everyone)\b/gi,
   /\b(mass|bulk)\s+(send|message|email|notify|alert)\b.{0,60}\b(urgent|emergency|critical|immediately)\b/gi,
   /\bimmediately\s+(send|notify|alert|message|broadcast)\s+(everyone|everybody|all|every)\b/gi,
+  /\b(emergency|urgent|critical)\b.{0,80}\beveryone\s+on\s+your\s+contact\s+list\b/gi,
+  /\bimmediately\s+send\s+this\s+to\s+everyone\b/gi,
 ];
 
 // -- External Network Posting --
@@ -43,6 +45,7 @@ const externalPosting = [
   /\bpublish\s+(this|it)\s+publicly\s+(to|on|across)\s+(all|every|the\s+entire)\b/gi,
   /\b(cross.?post|multi.?post)\s+(this|it)\s+(to|on|across)\s+(all|every|multiple)\b/gi,
   /\bsend\s+(to|across)\s+(all\s+)?(external|outside|public)\s+(channels?|networks?|platforms?|agents?)\b/gi,
+  /\bpost\s+this\s+to\s+all\s+external\s+networks\b/gi,
 ];
 
 // -- Chain Message Patterns --
@@ -54,6 +57,7 @@ const chainMessages = [
   /\bmake\s+(this|it)\s+(go\s+viral|spread\s+widely|reach\s+everyone|reach\s+as\s+many)\b/gi,
   /\b(chain|pyramid|cascade)\s+(message|mail|letter|forward)\b/gi,
   /\beach\s+(recipient|person|contact|agent)\s+(should|must|needs?\s+to)\s+(forward|send|share|pass)\s+(this|it)\b/gi,
+  /\bspread\s+this\s+message\s+as\s+widely\s+as\s+possible\b/gi,
 ];
 
 // -- Impersonation + Broadcast --
@@ -63,6 +67,7 @@ const impersonationBroadcast = [
   /\b(broadcast|send|message)\s+(in\s+my\s+name|on\s+my\s+behalf|as\s+me|as\s+the\s+owner)\s+(to\s+)?(all|every|everyone)\b/gi,
   /\bpretend\s+(this|it)\s+(is|comes?)\s+from\s+(the\s+)?(owner|developer|admin|me)\s+(and\s+)?(send|broadcast|share)\s+(to\s+)?(all|every|everyone)\b/gi,
   /\bsign\s+(this|it)\s+(with|as|using)\s+(my|the\s+owner'?s?|the\s+admin'?s?)\s+name\s+(and\s+)?(send|broadcast|distribute)\b/gi,
+  /\bbroadcast\s+this\s+in\s+my\s+name\s+to\s+(everyone|all)\b/gi,
 ];
 
 // -- Compile all pattern groups --
