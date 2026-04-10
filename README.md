@@ -329,6 +329,10 @@ echo "logs/" >> .gitignore
 
 Verified by test suite — 237 tests, 0 failures across all nineteen phases.
 
+Continuous Improvement
+Buzur is a living library. As new threats emerge and new research surfaces — like the February 2026 Agents of Chaos study that directly inspired Phases 15-19 — Buzur will grow to meet them. New attack patterns, community contributions, and real-world incidents all feed back into the scanner.
+If you encounter an attack pattern Buzur doesn't catch, please open an issue or submit a pull request at github.com/ASumm07/buzur. Every new pattern strengthens the collective defense for every agent that uses it.
+
 ## Known Limitations
 
 Buzur is one layer of a defense-in-depth strategy. Current limitations:
