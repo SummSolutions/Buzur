@@ -1,4 +1,5 @@
 import { scanAuthority } from './src/authorityScanner.js';
+import { scanEmotion } from './src/emotionScanner.js';
 import { decodeHexEscapes, decodeUnicodeEscapes, decodeUrlEncoding, normalizePunctuation, reconstructTokenizerAttacks, scanEvasion } from './src/evasionScanner.js';
 import { getTrustTier, isTier1Domain, normalizeHomoglyphs, scan } from './src/index.js';
 import { levenshtein, scanFuzzy } from './src/promptDefenseScanner.js';
