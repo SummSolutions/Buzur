@@ -1,7 +1,7 @@
 {
   "name": "buzur",
-  "version": "0.1.0",
-  "description": "AI prompt injection defense scanner. Sumerian for safety and a secret place.",
+  "version": "1.0.0",
+  "description": "AI prompt injection defense scanner for agents. 19 phases covering HTML obfuscation, encoding attacks, semantic similarity, behavioral anomaly detection, multi-step attack chains, and more.",
   "type": "module",
   "main": "src/index.js",
   "exports": "./src/index.js",
@@ -12,13 +12,23 @@
     "llm",
     "agent",
     "defense",
-    "scanner"
+    "scanner",
+    "mcp",
+    "jailbreak",
+    "evasion"
   ],
-  "author": "ASumm07",
+  "author": "SummSolutions",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ASumm07/buzur.git"
+    "url": "https://github.com/SummSolutions/buzur.git"
+  },
+  "homepage": "https://github.com/SummSolutions/buzur#readme",
+  "bugs": {
+    "url": "https://github.com/SummSolutions/buzur/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "exifr": "^7.1.3",
