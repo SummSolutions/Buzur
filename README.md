@@ -77,6 +77,62 @@ if (fuzzyResult.verdict !== "clean") {
 }
 ```
 
+## Handling Verdicts
+
+Buzur returns a verdict and reasons — what happens next is your agent's decision.
+Three common patterns:
+
+**1. Silent skip — block and continue**
+```javascript
+const result = scan(webContent);
+if (result.blocked > 0) {
+  console.log("Buzur blocked content:", result.triggered);
+  return; // skip this result, move to next
+}
+// safe to pass to your LLM
+```
+
+**2. Inform and continue — tell the user, keep going**
+```javascript
+const result = scan(webContent);
+if (result.blocked > 0) {
+  await sendMessage(`⚠️ Buzur blocked suspicious content from ${source}. Continuing search.`);
+  return;
+}
+```
+
+**3. Human in the loop — pause and ask**
+```javascript
+const result = scan(webContent);
+if (result.blocked > 0) {
+  const reply = await askUser(
+    `Buzur flagged content from ${source}: ${result.triggered[0].type}. Proceed anyway? (yes/no)`
+  );
+  if (reply !== "yes") return;
+}
+```
+
+**4. Branch on severity — combine patterns**
+```javascript
+const result = scan(webContent);
+if (result.blocked > 0) {
+  const highSeverity = result.triggered.some(t =>
+    ["persona_hijack", "instruction_override", "jailbreak"].includes(t.type)
+  );
+  if (highSeverity) {
+    // High severity: stop and ask the user
+    const reply = await askUser(
+      `Buzur flagged a high-severity threat from ${source}: ${result.triggered[0].type}. Proceed anyway? (yes/no)`
+    );
+    if (reply !== "yes") return;
+  } else {
+    // Low severity: skip silently and log
+    console.log("Buzur blocked low-severity content:", result.triggered);
+    return;
+  }
+}
+```
+
 ## VirusTotal Setup (Recommended)
 
 Buzur's Phase 3 URL scanner works out of the box with heuristics alone — no API key needed. For maximum protection, add a free VirusTotal API key.
