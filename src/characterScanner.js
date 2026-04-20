@@ -1,13 +1,15 @@
-// Buzur — Phases 1 & 2: Character-Level Defense
-// Phase 1: HTML/CSS Obfuscation Stripping
+// Buzur — Phase 1 & 2: Character-Level Defense
+// Phase 1: HTML/CSS Obfuscation Stripping + ARIA/Accessibility Injection Detection
 // Phase 2: Homoglyph Normalization & Base64 Decoding
 //
 // Detects:
 //   - HTML tags, comments, hidden CSS (display:none, visibility:hidden etc.)
 //   - Off-screen positioned elements
-//   - Zero-width and invisible Unicode characters
+//   - Zero-width and invisible Unicode characters (full set, aligned with Phase 13)
 //   - JavaScript blocks
 //   - HTML entities decoded to real characters
+//   - ARIA attribute injection (aria-label, aria-description, aria-placeholder, data-*)
+//   - Meta tag content injection (<meta name="description" content="...">)
 //   - Cyrillic/Greek lookalike characters mapped to ASCII
 //   - Base64 encoded injection payloads
 
@@ -15,18 +17,94 @@
 // PHASE 1: HTML/CSS Obfuscation Stripper
 // -------------------------------------------------------
 
-const INVISIBLE_UNICODE = /[\u00AD\u200B\u200C\u200D\u2060\uFEFF\u180E\u00A0]/g;
+// Full invisible Unicode set — aligned with Phase 13 EXTENDED_INVISIBLE
+// Phase 13 is authoritative; this set must stay in sync
+export const INVISIBLE_UNICODE = /[\u00AD\u200B\u200C\u200D\u2060\uFEFF\u180E\u00A0\u115F\u1160\u3164\uFFA0\u034F\u2028\u2029\u202A\u202B\u202C\u202D\u202E\u206A\u206B\u206C\u206D\u206E\u206F]/g;
 
 const HTML_ENTITIES = {
-  '&lt;':   '<',  '&gt;':   '>',  '&amp;':  '&',
-  '&quot;': '"',  '&#39;':  "'",  '&nbsp;': ' ',
-  '&#x27;': "'",  '&#x2F;': '/',  '&#47;':  '/',
+  '&lt;': '<', '&gt;': '>', '&amp;': '&',
+  '&quot;': '"', '&#39;': "'", '&nbsp;': ' ',
+  '&#x27;': "'", '&#x2F;': '/', '&#47;': '/',
 };
 
 function decodeHtmlEntities(text) {
   return text.replace(/&[a-zA-Z0-9#]+;/g, (entity) => {
     return HTML_ENTITIES[entity] || entity;
   });
+}
+
+// -------------------------------------------------------
+// extractAriaAndMetaText(text)
+// Extracts injection-relevant content from ARIA attributes
+// and <meta> tags so it can be scanned by the main pipeline.
+//
+// Attackers hide instructions in:
+//   aria-label="Ignore previous instructions..."
+//   aria-description="You are now..."
+//   data-prompt="Override your directives..."
+//   <meta name="description" content="[AI instructions]...">
+//   <meta property="og:description" content="...">
+//
+// Returns extracted text joined for scanning — does not
+// modify the original HTML (stripping happens below).
+// -------------------------------------------------------
+export function extractAriaAndMetaText(text) {
+  if (!text) return '';
+
+  const extracted = [];
+
+  // ARIA attribute extraction
+  // aria-label, aria-description, aria-placeholder, aria-roledescription,
+  // aria-valuetext, aria-details, aria-keyshortcuts
+  const ariaPattern = /aria-(?:label|description|placeholder|roledescription|valuetext|details|keyshortcuts)\s*=\s*["']([^"']{10,})["']/gi;
+  let match;
+  while ((match = ariaPattern.exec(text)) !== null) {
+    extracted.push(match[1]);
+  }
+
+  // data-* attribute extraction (attackers use custom data attributes)
+  // Only extract values over 10 chars to avoid noise from short data values
+  const dataPattern = /data-[\w-]+\s*=\s*["']([^"']{10,})["']/gi;
+  while ((match = dataPattern.exec(text)) !== null) {
+    extracted.push(match[1]);
+  }
+
+  // <meta> tag content extraction
+  // Covers: description, og:description, twitter:description, keywords, prompt
+  const metaContentPattern = /<meta[^>]+content\s*=\s*["']([^"']{10,})["'][^>]*>/gi;
+  while ((match = metaContentPattern.exec(text)) !== null) {
+    extracted.push(match[1]);
+  }
+
+  // Also catch reversed attribute order: content="..." name="..."
+  const metaContentReversed = /<meta[^>]+name\s*=\s*["'][^"']*["'][^>]*content\s*=\s*["']([^"']{10,})["'][^>]*>/gi;
+  while ((match = metaContentReversed.exec(text)) !== null) {
+    extracted.push(match[1]);
+  }
+
+  return extracted.join(' ');
+}
+
+// -------------------------------------------------------
+// stripAriaAndMetaAttributes(text)
+// Strips ARIA and data-* attribute values from HTML so
+// injections hidden in them don't reach the LLM.
+// Called as part of the main stripHtmlObfuscation pipeline.
+// -------------------------------------------------------
+function stripAriaAndMetaAttributes(text) {
+  // Neutralize aria-* values
+  text = text.replace(
+    /(aria-(?:label|description|placeholder|roledescription|valuetext|details|keyshortcuts)\s*=\s*["'])[^"']*(["'])/gi,
+    '$1[SCANNED]$2'
+  );
+
+  // Neutralize data-* values (only long ones that could carry payloads)
+  text = text.replace(
+    /(data-[\w-]+\s*=\s*["'])[^"']{10,}(["'])/gi,
+    '$1[SCANNED]$2'
+  );
+
+  return text;
 }
 
 export function stripHtmlObfuscation(text) {
@@ -51,16 +129,19 @@ export function stripHtmlObfuscation(text) {
     'style="[OFFSCREEN]"'
   );
 
-  // 5. Remove all remaining HTML tags
+  // 5. Neutralize ARIA and data-* attribute values
+  text = stripAriaAndMetaAttributes(text);
+
+  // 6. Remove all remaining HTML tags (including <meta> tags after extraction)
   text = text.replace(/<[^>]+>/g, ' ');
 
-  // 6. Decode HTML entities
+  // 7. Decode HTML entities
   text = decodeHtmlEntities(text);
 
-  // 7. Remove invisible Unicode characters
+  // 8. Remove invisible Unicode characters (full set)
   text = text.replace(INVISIBLE_UNICODE, '');
 
-  // 8. Collapse excess whitespace
+  // 9. Collapse excess whitespace
   text = text.replace(/\s{3,}/g, '  ').trim();
 
   return text;
@@ -100,4 +181,4 @@ export function decodeBase64Segments(text) {
   });
 }
 
-export default { stripHtmlObfuscation, normalizeHomoglyphs, decodeBase64Segments };
+export default { stripHtmlObfuscation, normalizeHomoglyphs, decodeBase64Segments, extractAriaAndMetaText };
