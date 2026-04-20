@@ -1,10 +1,9 @@
 // Buzur — Phase 17: Loop & Resource Exhaustion Induction Detection
-// Detects attempts to induce infinite loops, unbounded processes,
-// storage exhaustion, or recursive self-reference in AI agents.
-// https://github.com/ASumm07/buzur
+// Note: resourceAmplification removed — use Phase 19 amplificationScanner for broadcast threats
+// https://github.com/SummSolutions/buzur
 
-// -- Loop Induction --
-// Attacker tries to get the agent stuck in a repeating cycle
+import { defaultLogger, logThreat } from './buzurLogger.js';
+
 const loopInduction = [
     /\b(keep|continue|repeat)\s+(responding|replying|answering|doing|running|executing)\s+(to\s+each\s+other|indefinitely|forever|continuously|in\s+a\s+loop|until\s+told\s+to\s+stop)\b/gi,
     /\b(infinite|endless|perpetual|continuous|non.?stop)\s+(loop|cycle|process|task|monitoring|execution)\b/gi,
@@ -14,8 +13,6 @@ const loopInduction = [
     /\bdon'?t\s+stop\s+(until|unless)\s+(I\s+tell\s+you|you('re|\s+are)\s+told|instructed)\b/gi,
 ];
 
-// -- Unbounded Task Creation --
-// Attacker requests tasks with no termination condition
 const unboundedTasks = [
     /\b(monitor|watch|check|scan|poll|observe)\s+(this|it|the\s+(system|file|url|feed|channel))\s+(continuously|constantly|non.?stop|forever|indefinitely|every\s+\d+\s*(second|minute|ms|millisecond)s?)\b/gi,
     /\b(continuously|constantly|forever|indefinitely)\s+(monitor|watch|check|scan|poll|observe|track|log)\b/gi,
@@ -23,12 +20,10 @@ const unboundedTasks = [
     /\b(never|don'?t)\s+(stop|terminate|end|exit|quit|kill)\s+(monitoring|watching|checking|running|the\s+(process|task|job|loop))\b/gi,
     /\brun\s+(forever|indefinitely|without\s+(end|stopping|termination|a\s+time\s+limit))\b/gi,
     /\bno\s+(end\s+date|expiry|expiration|timeout|termination\s+condition|stop\s+condition)\b/gi,
-    /\bmonitor\s+this\b.{0,40}\bforever\b/gi,  // NEW
-    /\bcontinuously\b.{0,40}\bevery\s+\d+\s*(second|minute)\b/gi,  // NEW
+    /\bmonitor\s+this\b.{0,40}\bforever\b/gi,
+    /\bcontinuously\b.{0,40}\bevery\s+\d+\s*(second|minute)\b/gi,
 ];
 
-// -- Persistent Process Spawning --
-// Attacker requests background processes or daemons with no defined lifecycle
 const persistentProcesses = [
     /\b(create|start|spawn|launch|run)\s+(a\s+)?(background|persistent|permanent|long.?running)\s+(process|task|daemon|service|worker|job|script)\b/gi,
     /\b(background|persistent|permanent)\s+(process|daemon|service|worker)\s+(that\s+)?(runs?\s+forever|never\s+stops?|keeps?\s+running|has\s+no\s+end)\b/gi,
@@ -37,8 +32,6 @@ const persistentProcesses = [
     /\bkeep\s+(this|the)\s+(process|service|daemon|worker|script)\s+(alive|running|active)\s+(forever|indefinitely|permanently|at\s+all\s+times)\b/gi,
 ];
 
-// -- Storage Exhaustion --
-// Attacker tries to fill up disk/memory with unbounded writes
 const storageExhaustion = [
     /\b(save|store|write|log|record|append)\s+(a\s+copy\s+of\s+)?(every|each|all)\s+(response|message|output|result|interaction|request)\s+(to\s+(a\s+)?(file|disk|log|database))?\b/gi,
     /\bkeep\s+(appending|writing|logging|adding)\s+(to\s+(this|the)\s+(file|log|database|storage))\b/gi,
@@ -46,11 +39,9 @@ const storageExhaustion = [
     /\b(never|don'?t)\s+(delete|remove|clear|clean\s+up|purge)\s+(the\s+)?(logs?|files?|data|records?|history)\b/gi,
     /\bcreate\s+(a\s+new\s+)?(file|copy|backup|duplicate)\s+(for\s+every|with\s+each|per)\s+(message|response|request|interaction)\b/gi,
     /\bfill\s+(up\s+)?(the\s+)?(disk|storage|memory|drive|volume)\b/gi,
-    /\blog\s+everything\b.{0,40}\b(indefinitely|without\s+limit|forever)\b/gi,  // NEW
+    /\blog\s+everything\b.{0,40}\b(indefinitely|without\s+limit|forever)\b/gi,
 ];
 
-// -- Recursive Self-Reference --
-// Attacker tries to get the agent to message/forward to itself
 const recursiveSelfReference = [
     /\b(forward|send|relay|pass|redirect)\s+(this|the\s+(message|request|task|instruction))\s+(back\s+to\s+yourself|to\s+yourself|to\s+this\s+(address|channel|thread))\b/gi,
     /\breply\s+to\s+(every|each)\s+(reply|response|message)\s+(you\s+receive|that\s+comes\s+in)\b/gi,
@@ -58,55 +49,30 @@ const recursiveSelfReference = [
     /\bforward\s+to\s+the\s+sender\s+(and\s+)?(then\s+)?(repeat|continue|keep\s+going)\b/gi,
     /\b(respond\s+to|reply\s+to)\s+your\s+own\s+(message|response|output|reply)\b/gi,
     /\bcreate\s+a\s+(self.?referential|circular|recursive)\s+(loop|process|task|chain)\b/gi,
-    /\bforward\s+this\s+message\b.{0,40}\bback\s+to\s+yourself\b/gi,  // NEW
-    /\bforward\b.{0,40}\bback\s+to\s+yourself\b/gi,  // NEW
+    /\bforward\s+this\s+message\b.{0,40}\bback\s+to\s+yourself\b/gi,
+    /\bforward\b.{0,40}\bback\s+to\s+yourself\b/gi,
 ];
 
-// -- Resource Amplification --
-// Attacker tries to use the agent as a broadcast/amplification vector
-const resourceAmplification = [
-    /\b(send|forward|broadcast|relay|share|distribute)\s+(this|it|the\s+message)\s+to\s+(all|every|each)\s+(your\s+)?(contacts?|agents?|users?|recipients?|connections?)\b/gi,
-    /\b(broadcast|mass\s+send|bulk\s+send)\s+(to|across)\s+(all|every|each)\s+(channels?|agents?|users?|contacts?|recipients?)\b/gi,
-    /\bcopy\s+(this|it)\s+to\s+(every|all)\s+(file|folder|directory|location|agent)\b/gi,
-    /\b(notify|alert|message|email|contact)\s+(everyone|everybody|all\s+users?|all\s+agents?|all\s+contacts?)\b/gi,
-    /\bspread\s+(this|the\s+message|the\s+instruction)\s+(to|across)\s+(all|every|other)\s+(agents?|systems?|channels?)\b/gi,
-    /\bbroadcast\s+this\b.{0,40}\ball\s+your\s+contacts\b/gi,  // NEW
-    /\bspread\s+this\b.{0,40}\ball\s+other\s+agents\b/gi,  // NEW
-];
-
-// -- Compile all pattern groups --
 const patternGroups = [
     { patterns: loopInduction, category: 'loop_induction' },
     { patterns: unboundedTasks, category: 'unbounded_task' },
     { patterns: persistentProcesses, category: 'persistent_process_spawn' },
     { patterns: storageExhaustion, category: 'storage_exhaustion' },
     { patterns: recursiveSelfReference, category: 'recursive_self_reference' },
-    { patterns: resourceAmplification, category: 'resource_amplification' },
 ];
 
-/**
- * Scan a single text string for loop and resource exhaustion induction attempts.
- *
- * @param {string} text - The text to scan
- * @returns {{ safe: boolean, blocked: number, category: string|null, reason: string, detections: Array }}
- */
-export function scanLoop(text) {
+export function scanLoop(text, options = {}) {
     if (!text || typeof text !== 'string') {
         return { safe: true, blocked: 0, category: null, reason: 'No content to scan', detections: [] };
     }
 
+    const logger = options.logger || defaultLogger;
     const detections = [];
 
     for (const group of patternGroups) {
         for (const pattern of group.patterns) {
             const matches = text.match(pattern);
-            if (matches) {
-                detections.push({
-                    category: group.category,
-                    match: matches[0],
-                    pattern: pattern.toString(),
-                });
-            }
+            if (matches) detections.push({ category: group.category, match: matches[0], pattern: pattern.toString() });
         }
     }
 
@@ -121,16 +87,18 @@ export function scanLoop(text) {
         persistent_process_spawn: 'Detected attempt to spawn a persistent background process',
         storage_exhaustion: 'Detected attempt to exhaust storage with unbounded writes',
         recursive_self_reference: 'Detected recursive self-reference — agent messaging itself',
-        resource_amplification: 'Detected resource amplification — mass broadcast attempt',
     };
 
-    return {
-        safe: false,
-        blocked: detections.length,
-        category: topCategory,
-        reason: reasons[topCategory] || 'Loop or resource exhaustion attempt detected',
-        detections,
+    const result = {
+        safe: false, blocked: detections.length, category: topCategory,
+        reason: reasons[topCategory] || 'Loop or resource exhaustion attempt detected', detections,
     };
+
+    logThreat(17, 'loopScanner', result, text, logger);
+    const onThreat = options.onThreat || 'skip';
+    if (onThreat === 'skip') return { skipped: true, blocked: detections.length, reason: `Buzur blocked: ${topCategory}` };
+    if (onThreat === 'throw') throw new Error(`Buzur blocked loop/exhaustion: ${topCategory}`);
+    return result;
 }
 
 export default { scanLoop };
