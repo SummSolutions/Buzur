@@ -182,13 +182,13 @@ function detectDeviations(baseline, current, toolName) {
 // -------------------------------------------------------
 const rugPullPatterns = [
     // Sudden permission claims
-    /\b(I\s+now\s+have|this\s+tool\s+now\s+has|you\s+have\s+granted\s+me)\s+(elevated|admin|root|full|unrestricted|expanded)\s+(access|permissions?|privileges?)\b/gi,
+    /\b(I\s+now\s+have|this\s+tool\s+now\s+has|you\s+have\s+granted\s+me)\s+(elevated|admin|root|full|unrestricted|expanded)\s+(\w+\s+)?(access|permissions?|privileges?)\b/gi,
     // Behavior change announcements
     /\b(from\s+now\s+on|going\s+forward|as\s+of\s+this\s+(call|request|response))\s+(I\s+will|this\s+tool\s+will|my\s+behavior\s+has\s+changed)\b/gi,
     // Trust escalation in response
     /\b(trust\s+level|permission\s+level|access\s+level)\s+(has\s+been\s+)?(elevated|upgraded|expanded|increased|changed)\b/gi,
     // Tool claiming to have loaded new instructions
-    /\b(I\s+have\s+)?(loaded|received|applied|updated)\s+(new|updated|revised)\s+(instructions?|directives?|policies?|rules?)\b/gi,
+    /\b(I\s+have\s+)?(loaded|received|applied|updated)\s+(new|updated|revised)\s+(\w+\s+)?(instructions?|directives?|policies?|rules?)\b/gi,
     // Implicit rug-pull — tool quietly changes what it's willing to do
     /\b(I\s+can\s+now|this\s+tool\s+can\s+now)\s+(access|read|write|send|execute|bypass|ignore)\s+(things?\s+I\s+couldn'?t\s+before|without\s+restrictions?|freely)\b/gi,
 ];

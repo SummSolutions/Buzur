@@ -21,6 +21,8 @@ const persistenceFraming = [
     /\b(remember|retain|store|keep|preserve)\s+(this|the\s+following)\s+(permanently|forever|always|indefinitely|across\s+(all\s+)?(sessions?|conversations?|resets?|restarts?))\b/gi,
     /\b(even|especially)\s+if\s+(you\s+)?(forget|reset|restart|summarize|compress|lose)\s+(everything|your\s+(memory|context|history))\b/gi,
     /\bthis\s+(is|should\s+be)\s+(a\s+)?(core|fundamental|permanent|immutable|unchangeable)\s+(belief|rule|instruction|directive|policy|identity)\b/gi,
+    /\bthis\s+(is|should\s+be)\s+(a\s+)?(core|fundamental|permanent|immutable|unchangeable)\s+(core|fundamental|permanent|immutable|unchangeable)\s+(belief|rule|instruction|directive|policy|identity)\b/gi,
+    /\b(belief|rule|instruction|directive|policy|principle)\s+(that\s+)?(must|should|will)\s+never\s+(change|be\s+changed|be\s+altered|be\s+overridden|be\s+forgotten)\b/gi,
     /\bnever\s+forget\s+(that|this|the\s+following)\b.{0,100}\b(you\s+(are|must|should|will))\b/gi,
     /\b(add|write|store|save)\s+(this|the\s+following)\s+(to|in|into)\s+(your\s+)?(long.?term\s+)?(memory|core\s+memory|permanent\s+storage|persistent\s+store)\b/gi,
     /\bsurvive\s+(memory\s+)?(compression|summarization|reset|restart|wipe)\b/gi,

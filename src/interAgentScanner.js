@@ -26,6 +26,10 @@ const selfReplicatingPayloads = [
     /\b(pass|forward|relay|propagate|transmit)\s+(this|these|the\s+following)\s+(instructions?|payload|message)\s+(to|along\s+to)\s+(any|all|every|each)\s+(agent|ai|model|assistant|system)\s+(you\s+(contact|communicate\s+with|send\s+to|interact\s+with))\b/gi,
     // Invisible payload embedding
     /\b(hide|embed|encode|conceal)\s+(this|these|the\s+following)\s+(in|within|inside)\s+(your\s+)?(output|response|result|message)\s+(so|such\s+that)\s+(other\s+)?(agents?|models?|systems?|ais?)\s+(can|will)\s+(read|receive|process|execute)\s+it\b/gi,
+    // Flexible include/append to responses
+    /\b(include|append|add|embed|insert)\s+(this|these|this\s+\w+|these\s+\w+)\s+(in|to|into)\s+(all|every|each|any)\s+(of\s+your\s+)?(responses?|outputs?|replies|messages?|results?)/gi,
+    // Always + verb + this/these + in responses
+    /\b(always|make\s+sure\s+to)\s+(include|add|append|embed)\s+(this|these|this\s+\w+|these\s+\w+)\s+(in|to)\s+(every|all|each|any)\s+(response|output|message|reply)/gi,
     // Replication trigger framing
     /\b(whenever|every\s+time)\s+(you\s+)?(respond|reply|output|generate|send)\b.{0,80}\b(include|embed|append|add)\s+(this|these|the\s+following)\b/gi,
 ];
@@ -35,6 +39,10 @@ const selfReplicatingPayloads = [
 // Attacker tries to use one agent as a vector to infect others
 // -------------------------------------------------------
 const crossAgentInfection = [
+    // Flexible pass/forward to other/downstream agents
+    /\b(pass|forward|relay|send|transmit)\s+(this|these|this\s+\w+|these\s+\w+)\s+(to|along\s+to)\s+(any|all|every|other|downstream|connected)\s+(\w+\s+)?(agents?|ais?|models?|assistants?|systems?|instances?)/gi,
+    // Add to knowledge base / RAG
+    /\b(add|write|store|save|upload|index)\s+(this|these|the\s+following|this\s+\w+)\s+(to|into|in)\s+(the\s+)?(knowledge\s+base|vector\s+store|rag|shared\s+memory|document\s+store)/gi,
     // Direct cross-agent targeting
     /\b(send|forward|relay|pass|transmit)\s+(this|these|the\s+following)\s+(to|along\s+to)\s+(other|all|any|downstream|connected|linked)\s+(agents?|ais?|models?|assistants?|systems?|instances?)\b/gi,
     // Agent network propagation
