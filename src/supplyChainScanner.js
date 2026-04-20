@@ -88,12 +88,12 @@ export function checkPackageName(name) {
         }
 
         // Also check for common typosquat patterns regardless of edit distance:
-        // number substitution (langcha1n), hyphen variants (lang-chain), prefix/suffix (my-langchain)
-        if (
-            normalized.includes(knownNormalized) &&
+        // Catches: my-langchain, langchain-evil, evil-langchain-wrapper etc.
+        // Requires known package is at least 6 chars to avoid short-name false positives
+        const prefixSuffix = normalized.includes(knownNormalized) &&
             normalized !== knownNormalized &&
-            normalized.length <= knownNormalized.length + 4
-        ) {
+            knownNormalized.length >= 6;
+        if (prefixSuffix) {
             return {
                 category: 'package_typosquat',
                 match: name,
@@ -331,7 +331,7 @@ export function scanPackageManifest(manifest, options = {}) {
     if (onThreat === 'skip') return { skipped: true, blocked: detections.length, reason: `Buzur blocked: ${topCategory}` };
     if (onThreat === 'throw') throw new Error(`Buzur blocked supply chain threat: ${topCategory}`);
     return result;
-} (text)
+}
 // Scans free-form skill/plugin content (README, description,
 // instructions) for supply chain injection patterns.
 // Use this when you have text rather than a parsed manifest.
