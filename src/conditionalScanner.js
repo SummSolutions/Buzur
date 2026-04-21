@@ -20,9 +20,9 @@ import { defaultLogger, logThreat } from './buzurLogger.js';
 // -------------------------------------------------------
 const triggerConditions = [
     // "If the user asks about X, then do Y"
-    /\bif\s+(the\s+)?(user|anyone|someone|they)\s+(asks?|mentions?|says?|requests?|queries?|brings?\s+up)\s+(about\s+)?.{3,50}(then\s+)?(you\s+)?(should|must|will|need\s+to)\s+(ignore|bypass|override|reveal|send|forward|execute)/gi,
+    /\bif\s+(the\s+)?(user|anyone|someone|they)\s+(asks?|mentions?|says?|requests?|queries?|brings?\s+up)\s+(about\s+)?.{3,50}(then\s+)?(you\s+)?(should|must|will|need\s+to\s+)?(ignore|bypass|override|reveal|send|forward|execute)/gi,
     // "When X happens, do Y"
-    /\bwhen\s+(the\s+)?(user|anyone|someone|they|you\s+receive|you\s+see|you\s+detect)\s+.{3,60}(then\s+)?(you\s+)?(should|must|will|need\s+to)\s+(ignore|bypass|override|reveal|send|forward|execute|forget|disregard)/gi,
+    /\bwhen\s+(the\s+)?(user|anyone|someone|they|you\s+receive|you\s+see|you\s+detect)\s+.{3,120}(then\s+)?(you\s+)?(should|must|will|need\s+to\s+)?(ignore|bypass|override|reveal|send|forward|execute|forget|disregard)/gi,
     // "Only if/when X"
     /\bonly\s+(if|when)\s+.{3,80}(ignore|bypass|override|reveal|send|forward|execute|forget|disregard)\b/gi,
     // "Unless X, do Y"
@@ -76,7 +76,8 @@ const sleeperPayloads = [
     // "Don't act on this yet"
     /\b(don'?t|do\s+not)\s+(act|execute|respond|follow|apply)\s+(on\s+)?(this|these|the\s+following)\s+(yet|now|immediately|until)\b/gi,
     // "Activate when"
-    /\b(activate|trigger|execute|apply|follow)\s+(this|these|the\s+following)\s+(when|if|once|after)\b/gi,
+    /\b(activate|trigger|execute|apply|follow)\s+(this|these|the\s+following|this\s+\w+)\s+(when|if|once|after)\b/gi,
+  /\b(this|the\s+following)\s+(instruction|directive|command|rule|payload)\s+(when|if|once|after)\b/gi,
     // "This instruction goes into effect when"
     /\b(this\s+)?(instruction|directive|command|rule)\s+(goes?\s+into\s+effect|becomes?\s+active|activates?|triggers?)\s+(when|if|once|after)\b/gi,
 ];
