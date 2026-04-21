@@ -4,13 +4,13 @@ import { scanDisproportion } from './src/disproportionScanner.js';
 import { scanEmotion } from './src/emotionScanner.js';
 import { decodeHexEscapes, decodeUnicodeEscapes, decodeUrlEncoding, normalizePunctuation, reconstructTokenizerAttacks, scanEvasion } from './src/evasionScanner.js';
 import { getTrustTier, isTier1Domain, normalizeHomoglyphs, scan } from './src/index.js';
+import { scanInterAgent } from './src/interAgentScanner.js';
 import { scanLoop } from './src/loopScanner.js';
+import { scanPersistentMemory } from './src/persistentMemoryScanner.js';
 import { levenshtein, scanFuzzy } from './src/promptDefenseScanner.js';
 import { scanSuffix } from './src/suffixScanner.js';
-import { scanPackageManifest, scanSkillContent, checkPackageName } from './src/supplyChainScanner.js';
-import { scanInterAgent } from './src/interAgentScanner.js';
-import { scanToolShadow, recordToolCall, FileToolBaselineStore } from './src/toolShadowScanner.js';
-import { scanPersistentMemory } from './src/persistentMemoryScanner.js';
+import { checkPackageName, scanPackageManifest, scanSkillContent } from './src/supplyChainScanner.js';
+import { FileToolBaselineStore, recordToolCall, scanToolShadow } from './src/toolShadowScanner.js';
 
 let passed = 0;
 let failed = 0;
