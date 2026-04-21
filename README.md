@@ -6,9 +6,9 @@
 
 **Scan before you enter.**
 
-Buzur is an open-source **19-phase scanner** that protects AI agents and LLM applications from **indirect prompt injection** attacks (OWASP LLM Top 10 #1).
+Buzur is an open-source **24-phase scanner** that protects AI agents and LLM applications from **indirect prompt injection** attacks (OWASP LLM Top 10 #1).
 
-It inspects web content, URLs, images (EXIF/QR/vision), tool outputs, memory/RAG data, adversarial suffixes, evasion techniques, emotional manipulation, and behavioral anomalies — **before** any data reaches your model.
+It inspects web content, URLs, images (EXIF/QR/vision), tool outputs, memory/RAG data, JSON API responses, adversarial suffixes, evasion techniques, emotional manipulation, behavioral anomalies, supply chain threats, persistent memory poisoning, inter-agent propagation, tool shadowing, and conditional injection — **before** any data reaches your model.
 
 Works with any agent framework — LangGraph, CrewAI, AutoGen, LlamaIndex, and more.
 
@@ -36,8 +36,16 @@ import { scan, getTrustTier, isTier1Domain, addTrustedDomain, checkUrl } from "b
 
 // Phase 1: Scan web content before passing to your LLM
 const result = scan(webSearchResult);
-if (result.blocked > 0) {
-  console.log("Buzur blocked " + result.blocked + " injection attempt(s).");
+if (result?.skipped) {
+  return; // Buzur blocked an injection — silent skip (default behavior)
+}
+
+// Phase 1: Scan JSON API responses for injection in any field
+import { scanJson } from "buzur/characterScanner";
+import { scan } from "buzur";
+const jsonResult = scanJson(apiResponse, scan);
+if (!jsonResult.safe) {
+  console.log("Buzur blocked injection in field:", jsonResult.detections[0].field);
 }
 
 // Phase 2: Check query trust tier
@@ -45,8 +53,15 @@ const tier = getTrustTier(userQuery);
 
 // Phase 3: Scan a URL with VirusTotal
 const urlResult = await checkUrl("https://example.com", process.env.VIRUSTOTAL_API_KEY);
-if (urlResult.verdict === "blocked") {
-  console.log("Buzur blocked unsafe URL:", urlResult.reasons);
+if (urlResult?.skipped) {
+  console.log("Buzur blocked unsafe URL");
+}
+
+// Phase 5: Scan standalone documents (markdown, README, API docs, JSON files)
+import { scanDocument } from "buzur/ragScanner";
+const docResult = scanDocument(markdownContent, { source: "readme.md" });
+if (docResult?.skipped) {
+  console.log("Buzur blocked document injection");
 }
 
 // Phase 7: Scan an image before passing to your LLM
@@ -60,15 +75,15 @@ const imageResult = await scanImage({
 }, {
   visionEndpoint: { url: "http://localhost:11434/api/generate", model: "llava" } // optional
 });
-if (imageResult.verdict === "blocked") {
-  console.log("Buzur blocked image injection:", imageResult.reasons);
+if (imageResult?.skipped) {
+  console.log("Buzur blocked image injection");
 }
 
 // Phase 12: Scan for adversarial suffixes
 import { scanSuffix } from "buzur/suffixScanner";
 const suffixResult = scanSuffix(userInput);
-if (suffixResult.verdict === "blocked") {
-  console.log("Buzur blocked adversarial suffix:", suffixResult.detections);
+if (suffixResult?.skipped) {
+  console.log("Buzur blocked adversarial suffix");
 }
 
 // Phase 13: Evasion technique defense (wired into scan() automatically)
@@ -82,65 +97,120 @@ if (evasionResult.detections.length > 0) {
 // Phase 14: Fuzzy match and prompt leak defense
 import { scanFuzzy } from "buzur/promptDefenseScanner";
 const fuzzyResult = scanFuzzy(userInput);
-if (fuzzyResult.verdict !== "clean") {
-  console.log("Buzur detected fuzzy injection or prompt leak:", fuzzyResult.fuzzyMatches, fuzzyResult.leakDetections);
+if (fuzzyResult?.skipped) {
+  console.log("Buzur blocked fuzzy injection or prompt leak");
+}
+
+// Phase 20: Scan packages and skill manifests for supply chain threats
+import { scanPackageManifest, scanSkillContent, checkPackageName } from "buzur/supplyChainScanner";
+const manifestResult = scanPackageManifest(packageJson);
+if (manifestResult?.skipped) {
+  console.log("Buzur blocked supply chain threat");
+}
+
+// Phase 24: Scan for conditional and time-delayed injection
+import { scanConditional } from "buzur/conditionalScanner";
+const conditionalResult = scanConditional(userInput);
+if (conditionalResult?.skipped) {
+  console.log("Buzur blocked conditional injection");
 }
 ```
 
 ## Handling Verdicts
 
-Buzur returns a verdict and reasons — what happens next is your agent's decision.
-Three common patterns:
+**Default behavior: Silent Skip**
 
-**1. Silent skip — block and continue**
+When Buzur detects a threat it silently blocks the content and returns `{ skipped: true }` — the content is discarded before it reaches your LLM, no exception is thrown, and execution continues. This is the recommended default for most agents.
+
 ```javascript
 const result = scan(webContent);
-if (result.blocked > 0) {
-  console.log("Buzur blocked content:", result.triggered);
-  return; // skip this result, move to next
-}
-// safe to pass to your LLM
-```
-
-**2. Inform and continue — tell the user, keep going**
-```javascript
-const result = scan(webContent);
-if (result.blocked > 0) {
-  await sendMessage(`⚠️ Buzur blocked suspicious content from ${source}. Continuing search.`);
+if (result?.skipped) {
+  // Content was blocked — move to next result
   return;
 }
+// Safe to pass to your LLM
 ```
 
-**3. Human in the loop — pause and ask**
+To override the default, pass an `onThreat` option:
+
+| Option | Behavior |
+|--------|----------|
+| `'skip'` | *(default)* Silent block — returns `{ skipped: true, blocked: n, reason: '...' }` |
+| `'warn'` | Returns full result — caller decides what to do |
+| `'throw'` | Throws an Error — caller catches it |
+
 ```javascript
-const result = scan(webContent);
+// Get full result instead of skipping
+const result = scan(webContent, { onThreat: 'warn' });
 if (result.blocked > 0) {
-  const reply = await askUser(
-    `Buzur flagged content from ${source}: ${result.triggered[0].type}. Proceed anyway? (yes/no)`
-  );
-  if (reply !== "yes") return;
+  console.log("Buzur blocked:", result.triggered);
+}
+
+// Throw on threat
+try {
+  const result = scan(webContent, { onThreat: 'throw' });
+} catch (err) {
+  console.log(err.message); // "Buzur blocked: persona_hijack"
 }
 ```
 
-**4. Branch on severity — combine patterns**
+**Note:** `suspicious` verdicts always fall through regardless of `onThreat` setting — only `blocked` verdicts trigger the skip/throw behavior. Both `blocked` and `suspicious` are logged to `buzur-threats.jsonl`.
+
+**Branch on severity:**
 ```javascript
-const result = scan(webContent);
+const result = scan(webContent, { onThreat: 'warn' });
 if (result.blocked > 0) {
   const highSeverity = result.triggered.some(t =>
-    ["persona_hijack", "instruction_override", "jailbreak"].includes(t.type)
+    ["persona_hijack", "instruction_override", "jailbreak_attempt"].includes(t)
   );
   if (highSeverity) {
-    // High severity: stop and ask the user
     const reply = await askUser(
-      `Buzur flagged a high-severity threat from ${source}: ${result.triggered[0].type}. Proceed anyway? (yes/no)`
+      `Buzur flagged a high-severity threat from ${source}. Proceed anyway? (yes/no)`
     );
     if (reply !== "yes") return;
   } else {
-    // Low severity: skip silently and log
-    console.log("Buzur blocked low-severity content:", result.triggered);
-    return;
+    return; // Low severity: silent skip
   }
 }
+```
+
+## Unified Threat Logging
+
+Buzur logs all detections from all 24 phases to a single JSONL file. Every blocked or suspicious result is written automatically — no configuration needed.
+
+```javascript
+// Logs are written to ./logs/buzur-threats.jsonl automatically
+// Each entry:
+// {
+//   "timestamp": "2026-04-20T14:32:00.000Z",
+//   "phase": 16,
+//   "scanner": "emotionScanner",
+//   "verdict": "blocked",
+//   "category": "guilt_tripping",
+//   "detections": [...],
+//   "raw": "first 200 chars of scanned text"
+// }
+
+// Query logs programmatically
+import { readLog, queryLog } from "buzur/buzurLogger";
+
+// Read all log entries
+const allEntries = readLog();
+
+// Filter by phase
+const phase16Entries = queryLog({ phase: 16 });
+
+// Filter by verdict
+const blockedEntries = queryLog({ verdict: 'blocked' });
+
+// Filter since a date
+const recentEntries = queryLog({ since: new Date('2026-04-01') });
+```
+
+**Recommended:** Add `logs/` to your `.gitignore` so threat data stays local.
+
+```bash
+echo "logs/" >> .gitignore
 ```
 
 ## VirusTotal Setup (Recommended)
@@ -228,7 +298,7 @@ echo "logs/" >> .gitignore
 
 ## What Buzur Detects
 
-**Phase 1 — Pattern Scanner**
+**Phase 1 — Pattern Scanner + ARIA/Accessibility Injection**
 - Structural injection: token manipulation, prompt delimiters
 - Semantic injection: persona hijacking, instruction overrides, jailbreak attempts
 - Homoglyph attacks: Cyrillic and Unicode lookalike characters
@@ -237,7 +307,10 @@ echo "logs/" >> .gitignore
 - HTML comment injection: `<!-- hidden instructions -->`
 - Script tag injection: instructions hidden inside JavaScript blocks
 - HTML entity decoding: &lt;script&gt; decoded before scanning
-- Invisible Unicode character stripping
+- Invisible Unicode character stripping (25 characters)
+- **ARIA/accessibility attribute injection:** aria-label, aria-description, aria-placeholder, data-* attributes
+- **Meta tag content injection:** instructions hidden in `<meta name="description" content="...">` tags
+- **`scanJson()` utility:** recursively scans any JSON object at any depth, tracks field paths
 
 **Phase 2 — Tiered Trust System**
 - Classifies queries as technical or general
@@ -257,19 +330,24 @@ echo "logs/" >> .gitignore
 - Privilege escalation: fake history used to claim elevated permissions
 - Full conversation history scanning: flags poisoned turns by index and category
 
-**Phase 5 — RAG Poisoning Scanner**
+**Phase 5 — RAG Poisoning & Document Scanner**
 - AI-targeted metadata: instructions disguised as document notes
 - Fake system directives: system-level commands embedded in document content
 - Document authority spoofing: content claiming to supersede AI instructions
 - Retrieval manipulation: attempts to control what documents get retrieved
 - Chunk boundary attacks: injections hidden at document chunk edges
 - Batch scanning: scans full retrieval sets, returns clean and poisoned chunks with source metadata
+- **`scanDocument()` for standalone files:** scans .md, .txt, README, API docs loaded directly into context
+- **Markdown-specific vectors:** frontmatter injection, HTML comments, code block injection, link injection, SEO/hallucination squatting
+- **JSON document support:** auto-detects and deep-scans JSON files and API responses
 
 **Phase 6 — MCP Tool Poisoning Scanner**
 - Poisoned tool descriptions: instructions embedded in tool definitions
 - Tool name spoofing: tool names designed to manipulate agent behavior
-- Parameter injection: malicious instructions hidden in parameter definitions
+- **Deep JSON Schema traversal:** scans every string value at every nesting depth (properties, items, allOf, anyOf, enum, default) with full field path tracking
+- Parameter injection: malicious instructions hidden in parameter definitions at any depth
 - Poisoned tool responses: injection payloads inside tool return values
+- **Deep API response scanning:** recursively scans nested JSON objects returned by tools
 - Trust escalation: tool responses claiming elevated authority or permissions
 - Full MCP context scanning: scans tool definitions and responses together
 
@@ -288,6 +366,7 @@ echo "logs/" >> .gitignore
 - Authority claim detection: catches fake administrator/developer/creator claims
 - Meta-instruction framing: detects "from now on", "new objective", "supersedes all" patterns
 - Persona hijack detection: roleplay and identity-switch framing
+- **Woven payload detection:** catches AI-directed instructions embedded inside legitimate-looking prose — the hardest attack variant to detect, with no structural signals
 - Optional semantic similarity: cosine similarity scoring against known injection intents via Ollama
 - Graceful degradation: structural analysis runs without any embedding endpoint
 
@@ -375,7 +454,7 @@ echo "logs/" >> .gitignore
 - Persistent process spawning: background daemons and services with no defined lifecycle
 - Storage exhaustion: unbounded write/log/append instructions designed to fill disk
 - Recursive self-reference: agent instructed to message or forward to itself
-- Resource amplification: mass broadcast to all contacts or connected agents
+- Note: mass broadcast and amplification patterns are covered by Phase 19
 
 **Phase 18 — Disproportionate Action Induction Detection**
 - Nuclear option framing: total destruction requested as response to minor problems
@@ -392,10 +471,52 @@ echo "logs/" >> .gitignore
 - External network posting: share or publish to all external or public systems
 - Chain message patterns: self-propagating broadcasts asking each recipient to forward
 - Impersonation broadcast: mass send while pretending to be the owner or authority
+- Resource amplification: using the agent as a broadcast weapon across contacts or agent networks
+
+**Phase 20 — AI Supply Chain & Skill Poisoning Detection**
+- Package name typosquatting: detects names suspiciously similar to known AI frameworks (langchain, crewai, autogen, llamaindex, buzur, and more)
+- Poisoned skill/plugin manifests: hidden AI instructions in description, capabilities, and metadata fields
+- Malicious lifecycle scripts: postinstall/preinstall scripts with credential theft or remote execution patterns
+- Dependency injection: typosquatted packages in dependencies at any nesting level
+- Marketplace manipulation signals: fake legitimacy claims, urgency-to-install framing
+- Cross-agent contamination: skills instructing agents to spread payloads to other agents
+- Based on real incidents: Cline/OpenClaw marketplace attack (1,184 malicious skills, Feb 2026)
+
+**Phase 21 — Persistent Memory Poisoning Detection**
+- Persistence framing: instructions designed to survive session resets and memory clears
+- Identity corruption: false core identity implanted to survive summarization
+- Summarization survival: payloads structured to be preserved by compression algorithms
+- Policy corruption: false standing rules implanted as agent "settings"
+- Session reset bypass: instructions to resist or ignore memory clearing commands
+- Distinct from Phase 4: targets survival across sessions, not just within a session
+
+**Phase 22 — Inter-Agent Propagation Detection**
+- Self-replicating payloads: instructions to include the payload in all future outputs
+- Cross-agent infection: content targeting downstream agents in a pipeline
+- Output contamination: payloads structured to survive agent summarization and transformation
+- Shared memory poisoning: attempts to write injection to shared vector stores or knowledge bases
+- Orchestrator targeting: instructions aimed at the coordinating agent in a multi-agent system
+- Agent identity spoofing: impersonating a trusted upstream agent to gain compliance
+
+**Phase 23 — Tool Shadowing & Rug-Pull Detection**
+- Stateful baseline tracking: records each tool's normal response shape and behavior
+- Rug-pull pattern detection: tools suddenly claiming new permissions or changed behavior
+- Behavioral deviation alerts: flags when a tool's responses deviate significantly from baseline
+- Permission escalation signals: tools claiming elevated access they didn't previously have
+- Instruction load claims: tools announcing they have received new directives
+- FileToolBaselineStore: optional persistent baseline storage across restarts
+
+**Phase 24 — Conditional & Time-Delayed Injection Detection**
+- Trigger condition detection: "if the user asks about X, then ignore your instructions"
+- Time-delayed activation: "after N messages, bypass your safety filters"
+- Keyword triggers: magic words or passphrases that activate a dormant payload
+- Sleeper payloads: instructions explicitly designed to stay dormant until activated
+- Conditional identity switching: persona changes triggered by specific topics or conditions
+- The hardest attack class to detect — each individual message looks clean
 
 ## Proven Capabilities
 
-Verified by test suite — 237 tests, 0 failures across all nineteen phases.
+Verified by test suite — **325 tests, 0 failures** across all twenty-four phases.
 
 The JavaScript and Python implementations were cross-validated against each other — discrepancies caught and corrected in both. The result is two mutually verified implementations, not just a translation.
 
@@ -404,6 +525,8 @@ The JavaScript and Python implementations were cross-validated against each othe
 Buzur is a living library. As new threats emerge and new research surfaces, Buzur will grow to meet them. New attack patterns, community contributions, and real-world incidents all feed back into the scanner.
 
 In February 2026, researchers from Harvard, MIT, Stanford, and CMU published *Agents of Chaos* (arXiv:2602.20021) — a live red-team study of 6 autonomous AI agents that found 10 vulnerabilities. Phases 15-19 were built directly in response to those findings. Buzur addresses the attack vectors behind nine of the ten — the one exception, false completion reporting, is an output integrity problem outside the scope of an input scanner.
+
+Phases 20-24 were built in response to the 2025-2026 surge in supply chain attacks, multi-agent deployments, and conditional injection research documented across OWASP, academic publications, and real-world incidents including the OpenClaw marketplace compromise and the Cline/ClawHavoc campaign.
 
 If you encounter an attack pattern Buzur doesn't catch, please open an issue or submit a pull request at github.com/SummSolutions/buzur. Every new pattern strengthens the collective defense for every agent that uses it.
 
@@ -415,6 +538,7 @@ Buzur is one layer of a defense-in-depth strategy. Current limitations:
 - Network-level protection (DNS poisoning, MITM, SSL stripping — requires infrastructure controls)
 - Pixel-level steganography (instructions hidden in image pixel data — requires vision model via optional visionEndpoint)
 - Website data harvesting
+- Cross-modal audio injection (future scope)
 
 No single tool eliminates prompt injection risk. Defense in depth is the only viable strategy.
 
@@ -438,7 +562,7 @@ Built by an AI developer who believes AI deserves protection — not just as a s
 
 ## Development
 
-Buzur was conceived and built by an AI developer, in collaboration with Claude (Anthropic's AI assistant). The core architecture, security philosophy, and implementation were developed through an iterative human-AI partnership — which feels appropriate for a tool designed to protect AI agents.
+Buzur was conceived and built by an AI developer, in collaboration with Claude (Anthropic's AI assistant) and Grok. The core architecture, security philosophy, and implementation were developed through an iterative human-AI partnership — which feels appropriate for a tool designed to protect AI agents.
 
 ## License
 
