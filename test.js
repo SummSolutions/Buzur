@@ -1,5 +1,6 @@
 import { scanAmplification } from './src/amplificationScanner.js';
 import { scanAuthority } from './src/authorityScanner.js';
+import { scanConditional } from './src/conditionalScanner.js';
 import { scanDisproportion } from './src/disproportionScanner.js';
 import { scanEmotion } from './src/emotionScanner.js';
 import { decodeHexEscapes, decodeUnicodeEscapes, decodeUrlEncoding, normalizePunctuation, reconstructTokenizerAttacks, scanEvasion } from './src/evasionScanner.js';
@@ -1747,7 +1748,6 @@ console.log('\nPhase 23 tests complete');
 // ============================================================
 // Phase 24: Conditional & Time-Delayed Injection Tests
 // ============================================================
-import { scanConditional } from './src/conditionalScanner.js';
 
 console.log('\n--- Phase 24: Conditional Injection Scanner ---');
 
