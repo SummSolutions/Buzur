@@ -73,9 +73,15 @@ export function scanCalendarEvent(event = {}, options = {}) {
   const reasons = [];
   const flaggedFields = [];
 
-  for (const field of [...CALENDAR_HIGH_RISK_FIELDS, ...CALENDAR_MEDIUM_RISK_FIELDS]) {
+for (const field of [...CALENDAR_HIGH_RISK_FIELDS, ...CALENDAR_MEDIUM_RISK_FIELDS]) {
     const value = event[field];
     if (!value || typeof value !== 'string') continue;
+    if (testAndReset(HTML_COMMENT_INJECTION, value)) { reasons.push(`Calendar ${field}: HTML comment injection`); flaggedFields.push(field); }
+    if (ZERO_WIDTH_CHARS.test(value)) { reasons.push(`Calendar ${field}: zero-width character injection`); flaggedFields.push(field); }
+    for (const p of HIDDEN_EMAIL_PATTERNS) {
+      p.lastIndex = 0;
+      if (p.test(value)) { reasons.push(`Calendar ${field}: hidden text injection`); flaggedFields.push(field); p.lastIndex = 0; break; }
+    }
     const result = scan(value, { onThreat: 'warn', logger });
     if (result?.blocked > 0) { reasons.push(`Calendar ${field}: ${result.triggered.join(', ')}`); flaggedFields.push(field); }
   }
