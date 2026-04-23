@@ -1,7 +1,3 @@
-[![GitHub stars](https://img.shields.io/github/stars/SummSolutions/buzur?style=social)](https://github.com/SummSolutions/buzur)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![npm version](https://img.shields.io/npm/v/buzur)](https://www.npmjs.com/package/buzur)
-
 # Buzur — AI Prompt Injection Defense Scanner 
 
 **Scan before you enter.**
@@ -15,8 +11,12 @@ Works seamlessly with JavaScript/TypeScript agent frameworks: **LangGraph.js**, 
 **Python version**: [github.com/SummSolutions/buzur-python](https://github.com/SummSolutions/buzur-python)
 
 ---
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm](https://img.shields.io/badge/npm-v1.x-blue.svg)](https://www.npmjs.com/package/buzur)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
+[![Phases](https://img.shields.io/badge/phases-24-purple.svg)]()
 
-## Installation
+## Quick Start
 
 ```bash
 npm install buzur
