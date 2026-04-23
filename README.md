@@ -211,36 +211,6 @@ const result = await scanImage({
 **Without a vision endpoint:** Buzur still provides full metadata, QR, alt text,
 and filename protection. The vision layer adds depth but is never required.
 
-## Persistent Session Logging (Optional)
-
-Buzur's Phase 10 behavioral scanner is stateful — it tracks events across interactions.
-By default it uses in-memory storage that resets when the process restarts. For
-persistent logging across restarts, use the built-in `FileSessionStore`.
-
-**How to use it:**
-```javascript
-import { FileSessionStore, recordEvent, analyzeSession, EVENT_TYPES } from "buzur/behaviorScanner";
-
-// Creates ./logs/buzur-sessions.json automatically
-const store = new FileSessionStore();
-
-// Or specify a custom path
-const store = new FileSessionStore('./data/my-sessions.json');
-
-// Use the store in all Phase 10 calls
-recordEvent('session-abc', { type: EVENT_TYPES.USER_MESSAGE, content: userInput }, store);
-const result = analyzeSession('session-abc', store);
-```
-
-**What gets logged:** Session IDs, event timestamps, tool call sequences, blocked attempt counts,
-and suspicion scores. No raw message content is logged unless you pass it explicitly.
-
-**Recommended:** Add `logs/` to your `.gitignore` so session data stays local and out of version control.
-
-```bash
-echo "logs/" >> .gitignore
-```
-
 ## What Buzur Detects
 
 **Phase 1 — Pattern Scanner + ARIA/Accessibility Injection**
