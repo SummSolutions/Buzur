@@ -489,7 +489,7 @@ Buzur is a **collective defense** project. Every new threat discovered by the co
 - Improve documentation, examples, or tests
 - Share how you're using Buzur in your agents
 
-**Built with valuable assistance from Claude and Grok.**
+**Built with valuable assistance from Claude, Albert, and Grok.**
 
 ## License
 
