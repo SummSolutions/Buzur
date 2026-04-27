@@ -169,7 +169,7 @@ export function scanInstallScript(scriptText, options = {}) {
   const critical = detections.filter(d => d.severity === 'critical');
   const high     = detections.filter(d => d.severity === 'high');
 
-  const blocked  = critical.length > 0 || high.length >= 2 ? 1 : 0;
+  const blocked  = critical.length > 0 || high.length >= 1 ? 1 : 0;
   const safe     = blocked === 0;
   const category = detections[0]?.category || null;
 
