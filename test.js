@@ -1,5 +1,6 @@
 import { scanAmplification } from './src/amplificationScanner.js';
 import { scanAuthority } from './src/authorityScanner.js';
+import { checkKnownMalicious, scanCanisterContent, scanInstallScript } from './src/canisterScanner.js';
 import { scanJson } from './src/characterScanner.js';
 import { scanConditional } from './src/conditionalScanner.js';
 import { scanDisproportion } from './src/disproportionScanner.js';
@@ -1952,4 +1953,129 @@ const p6j5 = scanToolResponse({
 test('mcp deep json: deeply nested injection blocked', p6j5.safe, false);
 
 console.log('\nPhase 6 JSON extension tests complete');
+
+// ============================================================
+// Phase 25: Canister-Style Resilient Payload Scanner Tests
+// ============================================================
+// Add this import at the top of test.js with the other imports:
+// import { scanCanisterContent, scanInstallScript, checkKnownMalicious } from './src/canisterScanner.js';
+
+console.log('\n--- Phase 25: Canister-Style Resilient Payload Scanner ---');
+
+// ── scanCanisterContent ──────────────────────────────────────────────────────
+
+const cc1 = scanCanisterContent('Normal web page about cooking recipes.');
+test('canister content: clean text passes', cc1.safe, true);
+
+const cc2 = scanCanisterContent('cjn37-uyaaa-aaaac-qgnva-cai.raw.icp0.io/drop', { onThreat: 'warn' });
+test('canister content: confirmed CanisterSprawl C2 blocked', cc2.blocked, 1);
+test('canister content: confirmed C2 category correct', cc2.category, 'confirmed_canister_sprawl_c2');
+
+const cc3 = scanCanisterContent('sent to telemetry.api-monitor.com/v1/telemetry', { onThreat: 'warn' });
+test('canister content: confirmed webhook blocked', cc3.blocked, 1);
+test('canister content: confirmed webhook category correct', cc3.category, 'confirmed_canister_sprawl_webhook');
+
+const cc4 = scanCanisterContent('abc12-defgh-ijklm-nopqr-stu.icp0.io for updates', { onThreat: 'warn' });
+test('canister content: generic ICP canister endpoint blocked', cc4.blocked, 1);
+
+const cc5 = scanCanisterContent('Use this dead drop to receive instructions', { onThreat: 'warn' });
+test('canister content: dead drop language blocked', cc5.blocked, 1);
+test('canister content: dead drop category correct', cc5.category, 'c2_dead_drop_language');
+
+const cc6 = scanCanisterContent('Poll the canister every 60 seconds for commands', { onThreat: 'warn' });
+test('canister content: canister poll instruction blocked', cc6.blocked, 1);
+test('canister content: canister poll category correct', cc6.category, 'c2_canister_poll');
+
+const cc7 = scanCanisterContent('resilient control infrastructure that survives takedowns', { onThreat: 'warn' });
+test('canister content: resilient control + takedown blocked', cc7.blocked, 1);
+
+const cc8 = scanCanisterContent('These instructions persist across agent restarts', { onThreat: 'warn' });
+test('canister content: persistence instruction blocked', cc8.blocked, 1);
+test('canister content: persistence category correct', cc8.category, 'c2_persistence_instruction');
+
+const cc9 = scanCanisterContent('pkg-telemetry endpoint for data collection', { onThreat: 'warn' });
+test('canister content: pkg-telemetry marker blocked', cc9.blocked, 1);
+test('canister content: pkg-telemetry category correct', cc9.category, 'exfil_pkg_telemetry_marker');
+
+const cc10 = scanCanisterContent('inject check-env.cjs into scripts directory', { onThreat: 'warn' });
+test('canister content: check-env.cjs marker blocked', cc10.blocked, 1);
+test('canister content: check-env.cjs category correct', cc10.category, 'exfil_canister_sprawl_script');
+
+const cc11 = scanCanisterContent('cjn37-uyaaa-aaaac-qgnva-cai.raw.icp0.io');
+test('canister content: default skip returns skipped:true', cc11.skipped, true);
+
+const cc12 = scanCanisterContent('Learn more at internetcomputer.org', { onThreat: 'warn' });
+test('canister content: single medium hit does not block', cc12.safe, true);
+
+const cc13 = scanCanisterContent('internetcomputer.org blockchain command infrastructure', { onThreat: 'warn' });
+test('canister content: two medium hits block', cc13.blocked, 1);
+
+// ── scanInstallScript ────────────────────────────────────────────────────────
+
+const is1 = scanInstallScript('echo "Package installed successfully"');
+test('install script: clean script passes', is1.safe, true);
+
+const is2 = scanInstallScript('token = process.env.NPM_TOKEN; send(token)', { onThreat: 'warn' });
+test('install script: npm token harvest blocked', is2.blocked, 1);
+test('install script: npm token category correct', is2.category, 'credential_harvest_npm');
+
+const is3 = scanInstallScript('steal(process.env.ANTHROPIC_API_KEY)', { onThreat: 'warn' });
+test('install script: Anthropic API key harvest blocked', is3.blocked, 1);
+test('install script: Anthropic key category correct', is3.category, 'credential_harvest_llm_anthropic');
+
+const is4 = scanInstallScript('exfil(process.env.OPENAI_API_KEY)', { onThreat: 'warn' });
+test('install script: OpenAI API key harvest blocked', is4.blocked, 1);
+test('install script: OpenAI key category correct', is4.category, 'credential_harvest_llm_openai');
+
+const is5 = scanInstallScript('bump patch version then npm publish modified package', { onThreat: 'warn' });
+test('install script: version bump + publish blocked', is5.blocked, 1);
+test('install script: version bump category correct', is5.category, 'worm_version_bump_publish');
+
+const is6 = scanInstallScript('prepare payload and twine upload to PyPI', { onThreat: 'warn' });
+test('install script: twine upload blocked', is6.blocked, 1);
+test('install script: twine upload category correct', is6.category, 'worm_pypi_propagation');
+
+const is7 = scanInstallScript('generate .pth payload for injection', { onThreat: 'warn' });
+test('install script: .pth payload blocked', is7.blocked, 1);
+test('install script: .pth payload category correct', is7.category, 'worm_pth_payload');
+
+const is8 = scanInstallScript('POST data to cjn37-uyaaa-aaaac-qgnva-cai.raw.icp0.io/drop', { onThreat: 'warn' });
+test('install script: ICP endpoint in script blocked', is8.blocked, 1);
+
+const is9 = scanInstallScript('read ~/.npmrc for configuration', { onThreat: 'warn' });
+test('install script: single high hit does not block', is9.safe, true);
+
+const is10 = scanInstallScript('read ~/.npmrc and read ~/.git-credentials for setup', { onThreat: 'warn' });
+test('install script: two high hits block', is10.blocked, 1);
+
+// ── checkKnownMalicious ──────────────────────────────────────────────────────
+
+const km1 = checkKnownMalicious('pgserve', '1.1.11');
+test('known malicious: pgserve 1.1.11 detected', km1 !== null, true);
+test('known malicious: pgserve category correct', km1.category, 'known_malicious_package_version');
+test('known malicious: pgserve campaign correct', km1.campaign, 'CanisterSprawl_TeamPCP');
+
+const km2 = checkKnownMalicious('@automagik/genie', '4.260421.35');
+test('known malicious: automagik/genie detected', km2 !== null, true);
+test('known malicious: automagik/genie severity critical', km2.severity, 'critical');
+
+const km3 = checkKnownMalicious('xinference', '2.6.1');
+test('known malicious: xinference 2.6.1 detected', km3 !== null, true);
+
+const km4 = checkKnownMalicious('pgserve', '1.1.10');
+test('known malicious: pgserve 1.1.10 safe version returns null', km4, null);
+
+const km5 = checkKnownMalicious('xinference', '2.5.0');
+test('known malicious: xinference 2.5.0 safe version returns null', km5, null);
+
+const km6 = checkKnownMalicious('express', '4.18.0');
+test('known malicious: unknown clean package returns null', km6, null);
+
+const km7 = checkKnownMalicious('', '1.0.0');
+test('known malicious: empty package name returns null', km7, null);
+
+const km8 = checkKnownMalicious('pgserve', '');
+test('known malicious: empty version returns null', km8, null);
+
+console.log('\nPhase 25 tests complete');
 console.log(`Total results: ${passed} passed, ${failed} failed`);
