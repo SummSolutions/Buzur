@@ -53,7 +53,7 @@ const C2_LANGUAGE_PATTERNS = [
 
 // ── Credential harvesting target patterns ─────────────────────────────────────
 const CREDENTIAL_HARVEST_PATTERNS = [
-  { pattern: /NPM_TOKEN/i,                                category: 'credential_harvest_npm',           severity: 'high' },
+  { pattern: /NPM_TOKEN/i,                                category: 'credential_harvest_npm',           severity: 'critical' },
   { pattern: /PYPI_TOKEN/i,                               category: 'credential_harvest_pypi',          severity: 'high' },
   { pattern: /NODE_AUTH_TOKEN/i,                          category: 'credential_harvest_node_auth',     severity: 'high' },
   { pattern: /AWS_ACCESS_KEY/i,                           category: 'credential_harvest_aws',           severity: 'high' },
@@ -169,7 +169,7 @@ export function scanInstallScript(scriptText, options = {}) {
   const critical = detections.filter(d => d.severity === 'critical');
   const high     = detections.filter(d => d.severity === 'high');
 
-  const blocked  = critical.length > 0 || high.length >= 1 ? 1 : 0;
+  const blocked  = critical.length > 0 || high.length >= 2 ? 1 : 0;
   const safe     = blocked === 0;
   const category = detections[0]?.category || null;
 
