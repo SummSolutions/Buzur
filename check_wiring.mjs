@@ -26,6 +26,8 @@ const scanners = [
     { file: 'persistentMemoryScanner.js', phase: 21 },
     { file: 'interAgentScanner.js', phase: 22 },
     { file: 'toolShadowScanner.js', phase: 23 },
+    { file: 'conditionalScanner.js', phase: 24 },
+    { file: 'canisterScanner.js', phase: 25 },
 ];
 
 console.log('\nBuzur Logger Wiring Status\n' + '='.repeat(50));
