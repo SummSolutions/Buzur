@@ -1,10 +1,10 @@
 {
   "name": "buzur",
-  "version": "1.1.0",
-  "description": "AI prompt injection defense scanner for agents. 19 phases covering HTML obfuscation, encoding attacks, semantic similarity, behavioral anomaly detection, multi-step attack chains, and more.",
+  "version": "1.2.0",
+  "description": "AI prompt injection defense scanner for agents. 25 phases covering HTML obfuscation, encoding attacks, semantic similarity, behavioral anomaly detection, multi-step attack chains, supply chain worm detection, and more.",
   "type": "module",
-  "main": "src/index.js",
-  "exports": "./src/index.js",
+  "main": "src/exports.js",
+  "exports": "./src/exports.js",
   "keywords": [
     "ai",
     "security",
