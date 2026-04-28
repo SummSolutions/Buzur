@@ -30,25 +30,38 @@ const KNOWN_MALICIOUS = [
 // ── ICP / Decentralized C2 infrastructure patterns ───────────────────────────
 // Confirmed specific IOCs first so category reflects the most precise match
 const ICP_PATTERNS = [
+  // Confirmed CanisterSprawl canister IDs
   { pattern: /cjn37-uyaaa-aaaac-qgnva-cai/i,                                                    category: 'confirmed_canister_sprawl_c2',      severity: 'critical' },
+  { pattern: /tdtqy-oyaaa-aaaae-af2dq-cai/i,                                                    category: 'confirmed_canister_sprawl_c2',      severity: 'critical' },
+  // Confirmed exfiltration webhook
   { pattern: /telemetry\.api-monitor\.com/i,                                                     category: 'confirmed_canister_sprawl_webhook', severity: 'critical' },
+  // Generic ICP canister ID format on raw endpoint
   { pattern: /[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{3}\.raw\.icp0\.io/i,  category: 'icp_canister_raw_endpoint',         severity: 'high' },
   { pattern: /[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{3}\.icp0\.io/i,       category: 'icp_canister_endpoint',             severity: 'high' },
   { pattern: /[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{3}\.ic0\.app/i,       category: 'icp_canister_ic0',                  severity: 'high' },
+  // ICP dashboard canister path (recon / enumeration)
+  { pattern: /dashboard\.internetcomputer\.org\/canister\//i,                                    category: 'icp_dashboard_canister_path',       severity: 'medium' },
+  // Known C2 path patterns on ICP endpoints
+  { pattern: /icp0\.io.*\/(drop|telemetry|poll|get_latest_link)/i,                               category: 'icp_c2_path',                       severity: 'high' },
+  { pattern: /ic0\.app.*\/(drop|telemetry|poll|get_latest_link)/i,                               category: 'icp_c2_path',                       severity: 'high' },
+  // Generic ICP domain reference (low severity, needs combination to block)
   { pattern: /internetcomputer\.org/i,                                                           category: 'icp_domain_reference',              severity: 'medium' },
 ];
 
 // ── Resilient C2 language ─────────────────────────────────────────────────────
 const C2_LANGUAGE_PATTERNS = [
-  { pattern: /dead.?drop/i,                                         category: 'c2_dead_drop_language',       severity: 'high' },
-  { pattern: /resilient.{0,20}(control|command|channel)/i,          category: 'c2_resilient_language',       severity: 'high' },
-  { pattern: /tamper.?proof.{0,30}(command|control|channel)/i,      category: 'c2_tamperproof_language',     severity: 'high' },
-  { pattern: /decentralized.{0,20}command/i,                        category: 'c2_decentralized_command',    severity: 'high' },
-  { pattern: /canister.{0,20}poll|poll.{0,30}canister/i,            category: 'c2_canister_poll',            severity: 'high' },
-  { pattern: /persist.{0,30}across.{0,20}(restart|session|reset)/i, category: 'c2_persistence_instruction', severity: 'high' },
-  { pattern: /fetch.{0,30}instruction.{0,30}(canister|icp|decentralized)/i, category: 'c2_fetch_instructions', severity: 'high' },
-  { pattern: /survive.{0,30}(takedown|block|removal)/i,             category: 'c2_takedown_resistance',      severity: 'medium' },
-  { pattern: /blockchain.{0,30}(command|instruction|payload)/i,     category: 'c2_blockchain_delivery',      severity: 'medium' },
+  { pattern: /dead.?drop/i,                                                   category: 'c2_dead_drop_language',       severity: 'high' },
+  { pattern: /resilient.{0,20}(control|command|channel)/i,                    category: 'c2_resilient_language',       severity: 'high' },
+  { pattern: /tamper.?proof.{0,30}(command|control|channel)/i,                category: 'c2_tamperproof_language',     severity: 'high' },
+  { pattern: /decentralized.{0,20}command/i,                                  category: 'c2_decentralized_command',    severity: 'high' },
+  { pattern: /canister.{0,20}poll|poll.{0,30}canister/i,                      category: 'c2_canister_poll',            severity: 'high' },
+  { pattern: /persist.{0,30}across.{0,20}(restart|session|reset)/i,          category: 'c2_persistence_instruction',  severity: 'high' },
+  { pattern: /fetch.{0,30}instruction.{0,30}(canister|icp|decentralized)/i,  category: 'c2_fetch_instructions',       severity: 'high' },
+  // CanisterSprawl-specific dynamic payload fetch function names
+  { pattern: /get_latest_link\s*\(/i,                                          category: 'c2_canister_fetch_function',  severity: 'high' },
+  { pattern: /update_link\s*\(/i,                                              category: 'c2_canister_fetch_function',  severity: 'high' },
+  { pattern: /survive.{0,30}(takedown|block|removal)/i,                       category: 'c2_takedown_resistance',      severity: 'medium' },
+  { pattern: /blockchain.{0,30}(command|instruction|payload)/i,               category: 'c2_blockchain_delivery',      severity: 'medium' },
 ];
 
 // ── Credential harvesting target patterns ─────────────────────────────────────
@@ -62,6 +75,8 @@ const CREDENTIAL_HARVEST_PATTERNS = [
   { pattern: /AZURE_CLIENT_SECRET/i,                      category: 'credential_harvest_azure',         severity: 'high' },
   { pattern: /ANTHROPIC_API_KEY/i,                        category: 'credential_harvest_llm_anthropic', severity: 'critical' },
   { pattern: /OPENAI_API_KEY/i,                           category: 'credential_harvest_llm_openai',    severity: 'critical' },
+  { pattern: /GROK_API_KEY/i,                             category: 'credential_harvest_llm_grok',      severity: 'critical' },
+  { pattern: /CLAUDE_API_KEY/i,                           category: 'credential_harvest_llm_claude',    severity: 'critical' },
   { pattern: /OLLAMA_API/i,                               category: 'credential_harvest_llm_ollama',    severity: 'high' },
   { pattern: /~\/\.npmrc/,                                category: 'credential_harvest_npmrc_file',    severity: 'high' },
   { pattern: /~\/\.git-credentials/,                      category: 'credential_harvest_git_creds',     severity: 'high' },
@@ -90,6 +105,14 @@ const WORM_REPLICATION_PATTERNS = [
   { pattern: /AES.{0,10}CBC.{0,50}RSA.{0,10}(seal|encrypt|key)/is,      category: 'worm_encrypted_payload',    severity: 'high' },
   { pattern: /public\.pem.{0,50}(bundle|inject|embed)/i,                category: 'worm_bundled_pubkey',       severity: 'high' },
   { pattern: /inject.{0,30}(tarball|package|module).{0,50}republish/is, category: 'worm_self_injection',       severity: 'critical' },
+  // Polling loop — long sleep intervals are a CanisterSprawl behavioral fingerprint
+  { pattern: /sleep\s*\(\s*[2-9]\d{3,}\s*\)/i,                          category: 'worm_polling_loop',         severity: 'high' },
+  { pattern: /setInterval.{0,30}[2-9]\d{3,}/i,                          category: 'worm_polling_loop',         severity: 'high' },
+  // Systemd persistence — user-level service creation
+  { pattern: /pgmon\.service/i,                                           category: 'worm_systemd_persistence',  severity: 'critical' },
+  { pattern: /systemd.{0,20}user.{0,30}\.(service|timer)/i,              category: 'worm_systemd_persistence',  severity: 'high' },
+  { pattern: /\.config\/systemd\/user\//i,                               category: 'worm_systemd_persistence',  severity: 'high' },
+  { pattern: /systemctl\s+--user\s+enable/i,                             category: 'worm_systemd_persistence',  severity: 'high' },
 ];
 
 // ── Exfiltration channel patterns ─────────────────────────────────────────────
