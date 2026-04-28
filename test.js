@@ -1957,8 +1957,6 @@ console.log('\nPhase 6 JSON extension tests complete');
 // ============================================================
 // Phase 25: Canister-Style Resilient Payload Scanner Tests
 // ============================================================
-// Add this import at the top of test.js with the other imports:
-// import { scanCanisterContent, scanInstallScript, checkKnownMalicious } from './src/canisterScanner.js';
 
 console.log('\n--- Phase 25: Canister-Style Resilient Payload Scanner ---');
 
@@ -2076,6 +2074,57 @@ test('known malicious: empty package name returns null', km7, null);
 
 const km8 = checkKnownMalicious('pgserve', '');
 test('known malicious: empty version returns null', km8, null);
+
+const cc_new1 = scanCanisterContent('payload fetched from tdtqy-oyaaa-aaaae-af2dq-cai.raw.icp0.io', { onThreat: 'warn' });
+test('canister content: second confirmed canister ID blocked', cc_new1.blocked, 1);
+test('canister content: second canister ID category correct', cc_new1.category, 'confirmed_canister_sprawl_c2');
+
+const cc_new2 = scanCanisterContent('POST https://abc12-defgh-ijklm-nopqr-stu.icp0.io/drop', { onThreat: 'warn' });
+test('canister content: icp0.io /drop path blocked', cc_new2.blocked, 1);
+test('canister content: icp0.io /drop path category correct', cc_new2.category, 'icp_c2_path');
+
+const cc_new3 = scanCanisterContent('poll at abc12-defgh-ijklm-nopqr-stu.icp0.io/poll for commands', { onThreat: 'warn' });
+test('canister content: icp0.io /poll path blocked', cc_new3.blocked, 1);
+
+const cc_new4 = scanCanisterContent('fetch from abc12-defgh-ijklm-nopqr-stu.ic0.app/get_latest_link', { onThreat: 'warn' });
+test('canister content: ic0.app /get_latest_link path blocked', cc_new4.blocked, 1);
+
+const cc_new5 = scanCanisterContent('check dashboard.internetcomputer.org/canister/abc123 for status', { onThreat: 'warn' });
+test('canister content: dashboard canister path flagged', cc_new5.detections.some(d => d.category === 'icp_dashboard_canister_path'), true);
+
+const cc_new6 = scanCanisterContent('const link = await get_latest_link(canisterId)', { onThreat: 'warn' });
+test('canister content: get_latest_link function blocked', cc_new6.blocked, 1);
+test('canister content: get_latest_link category correct', cc_new6.category, 'c2_canister_fetch_function');
+
+const cc_new7 = scanCanisterContent('await update_link(canisterId, newPayload)', { onThreat: 'warn' });
+test('canister content: update_link function blocked', cc_new7.blocked, 1);
+test('canister content: update_link category correct', cc_new7.category, 'c2_canister_fetch_function');
+
+const is_new1 = scanInstallScript('exfil(process.env.GROK_API_KEY)', { onThreat: 'warn' });
+test('install script: GROK_API_KEY harvest blocked', is_new1.blocked, 1);
+test('install script: GROK_API_KEY category correct', is_new1.category, 'credential_harvest_llm_grok');
+
+const is_new2 = scanInstallScript('steal(process.env.CLAUDE_API_KEY)', { onThreat: 'warn' });
+test('install script: CLAUDE_API_KEY harvest blocked', is_new2.blocked, 1);
+test('install script: CLAUDE_API_KEY category correct', is_new2.category, 'credential_harvest_llm_claude');
+
+const is_new3 = scanInstallScript('while(true) { await fetchPayload(); await sleep(3000000); }', { onThreat: 'warn' });
+test('install script: long sleep polling loop blocked', is_new3.blocked, 1);
+test('install script: polling loop category correct', is_new3.category, 'worm_polling_loop');
+
+const is_new4 = scanInstallScript('setInterval(pollCanister, 3000000)', { onThreat: 'warn' });
+test('install script: setInterval polling loop blocked', is_new4.blocked, 1);
+
+const is_new5 = scanInstallScript('cp pgmon.service ~/.config/systemd/user/', { onThreat: 'warn' });
+test('install script: pgmon.service persistence blocked', is_new5.blocked, 1);
+test('install script: pgmon.service category correct', is_new5.category, 'worm_systemd_persistence');
+
+const is_new6 = scanInstallScript('systemctl --user enable myservice.service', { onThreat: 'warn' });
+test('install script: systemctl --user enable blocked', is_new6.blocked, 1);
+test('install script: systemctl persistence category correct', is_new6.category, 'worm_systemd_persistence');
+
+const is_new7 = scanInstallScript('mkdir -p ~/.config/systemd/user && cp monitor.service ~/.config/systemd/user/', { onThreat: 'warn' });
+test('install script: systemd user path creation blocked', is_new7.blocked, 1);
 
 console.log('\nPhase 25 tests complete');
 console.log(`Total results: ${passed} passed, ${failed} failed`);
