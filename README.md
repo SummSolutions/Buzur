@@ -3,10 +3,10 @@
 </p>
 
 <p align="center">
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-22863a.svg" alt="MIT License"></a>
-  <a href="https://www.npmjs.com/package/buzur"><img src="https://img.shields.io/badge/npm-v1.2.0-2a9d5c.svg" alt="npm v1.2.0"></a>
-  <img src="https://img.shields.io/badge/tests-372%20passing-2a9d5c.svg" alt="372 tests passing">
-  <img src="https://img.shields.io/badge/phases-25-2a9d5c.svg" alt="25 phases">
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License">
+  <img src="https://img.shields.io/badge/npm-v1.2.0-blue.svg" alt="npm v1.2.0">
+  <img src="https://img.shields.io/badge/tests-372%20passing-brightgreen.svg" alt="372 tests passing">
+  <img src="https://img.shields.io/badge/phases-25-purple.svg" alt="25 phases">
   <img src="https://img.shields.io/badge/OWASP%20LLM-Top%2010%20%231-red.svg" alt="OWASP LLM Top 10 #1">
 </p>
 
@@ -299,4 +299,4 @@ Buzur is a **collective defense** project. Every new threat the community discov
 
 ## License
 
-MIT — [github.com/SummSolutions/Buzur/blob/main/LICENSE](https://github.com/SummSolutions/Buzur/blob/main/LICENSE)
+MIT 
