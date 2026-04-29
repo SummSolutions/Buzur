@@ -506,7 +506,7 @@ Every phase was built in direct response to a real attack or published research.
 </details>
 
 <details>
-<summary><strong>Phase 25 — Canister-Style Resilient Payload ★ New in v8</strong></summary>
+<summary><strong>Phase 25 — Canister-Style Resilient Payload</strong></summary>
 
 - ICP blockchain C2 infrastructure detection (confirmed CanisterSprawl canister IDs)
 - Credential harvesting detection — ANTHROPIC_API_KEY, OPENAI_API_KEY, GROK_API_KEY, NPM_TOKEN
